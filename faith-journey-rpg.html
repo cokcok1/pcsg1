@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>信心之旅 — Faith Journey RPG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Serif+TC:wght@400;700&display=swap');
+:root{
+  --pixel:#Press+Start+2P;
+  --bg:#0a0a1a;
+  --gold:#f0c060;
+  --light-gold:#fff0a0;
+  --blue:#3060c0;
+  --green:#30a050;
+  --red:#c03030;
+  --white:#f0f0f0;
+  --dark:#050510;
+  --ui-bg:rgba(0,0,10,0.88);
+}
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
+body{background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:'Press Start 2P',monospace;overflow:hidden;}
+
+/* ── TITLE SCREEN ── */
+#titleScreen{
+  position:fixed;inset:0;z-index:100;
+  background:radial-gradient(ellipse at center,#0a1a3a 0%,#000008 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;
+}
+.title-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.tstar{position:absolute;background:#fff;border-radius:50%;animation:twink var(--d) var(--dl) ease-in-out infinite;}
+@keyframes twink{0%,100%{opacity:0.1;}50%{opacity:var(--op);}}
+.title-cross{font-size:3rem;color:var(--gold);text-shadow:0 0 40px var(--gold),0 0 80px rgba(240,192,96,0.5);animation:cross-glow 2s ease-in-out infinite;margin-bottom:20px;}
+@keyframes cross-glow{0%,100%{text-shadow:0 0 30px var(--gold);}50%{text-shadow:0 0 60px var(--gold),0 0 100px rgba(240,192,96,0.4),0 0 140px rgba(240,192,96,0.2);}}
+.title-text{font-size:clamp(0.8rem,3vw,1.4rem);color:var(--gold);letter-spacing:4px;text-align:center;line-height:2;text-shadow:2px 2px 0 #000,0 0 20px rgba(240,192,96,0.5);}
+.title-sub{font-size:clamp(0.45rem,1.5vw,0.65rem);color:rgba(240,192,96,0.5);letter-spacing:6px;margin:12px 0 40px;font-family:'Noto Serif TC',serif;}
+.title-blink{animation:blink 1.2s step-end infinite;font-size:clamp(0.45rem,1.5vw,0.6rem);color:var(--white);letter-spacing:2px;margin-top:20px;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+.title-verse{position:absolute;bottom:30px;font-size:0.5rem;color:rgba(240,192,96,0.3);letter-spacing:1px;font-family:'Noto Serif TC',serif;text-align:center;line-height:2;}
+
+/* ── GAME WRAPPER ── */
+#gameWrapper{display:none;flex-direction:column;align-items:center;width:100%;max-width:600px;}
+
+/* ── HUD ── */
+#hud{
+  width:100%;padding:8px 12px;
+  background:var(--ui-bg);
+  border-bottom:2px solid var(--gold);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+}
+.hud-name{font-size:0.45rem;color:var(--gold);letter-spacing:1px;}
+.hearts{display:flex;gap:3px;}
+.heart{width:10px;height:10px;background:var(--red);clip-path:polygon(50% 90%,0% 35%,15% 10%,35% 10%,50% 25%,65% 10%,85% 10%,100% 35%);}
+.heart.empty{background:#333;}
+.hud-bars{display:flex;flex-direction:column;gap:3px;}
+.bar-row{display:flex;align-items:center;gap:4px;}
+.bar-label{font-size:0.35rem;color:rgba(240,192,96,0.6);width:20px;}
+.bar-track{width:80px;height:6px;background:#111;border:1px solid #333;}
+.bar-fill{height:100%;transition:width 0.3s;}
+.bar-faith{background:linear-gradient(90deg,#4080ff,#80c0ff);}
+.bar-xp{background:linear-gradient(90deg,var(--gold),var(--light-gold));}
+.hud-level{font-size:0.45rem;color:var(--gold);text-align:center;}
+.hud-level span{display:block;font-size:0.55rem;color:var(--light-gold);}
+.hud-keys{display:flex;gap:4px;}
+.key-item{width:14px;height:14px;background:var(--gold);border:1px solid #000;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:0.35rem;color:#000;}
+
+/* ── CANVAS ── */
+#gameCanvas{display:block;width:100%;border:2px solid #222;cursor:none;touch-action:none;}
+
+/* ── BOTTOM BAR ── */
+#bottomBar{
+  width:100%;background:var(--ui-bg);border-top:2px solid var(--gold);
+  padding:8px 12px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.equip-slots{display:flex;gap:6px;}
+.slot{width:36px;height:36px;background:#111;border:2px solid #333;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;position:relative;cursor:pointer;}
+.slot.active{border-color:var(--gold);box-shadow:0 0 8px rgba(240,192,96,0.4);}
+.slot-label{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);font-size:0.3rem;color:rgba(240,192,96,0.5);white-space:nowrap;}
+.dpad{display:grid;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(3,32px);gap:2px;}
+.dpad-btn{background:rgba(240,192,96,0.15);border:1px solid rgba(240,192,96,0.3);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.8rem;cursor:pointer;user-select:none;-webkit-user-select:none;transition:background 0.1s;}
+.dpad-btn:active,.dpad-btn.pressed{background:rgba(240,192,96,0.4);}
+.dpad-center{background:rgba(240,192,96,0.05);}
+.action-btns{display:flex;flex-direction:column;gap:4px;}
+.act-btn{padding:6px 10px;border:1px solid rgba(240,192,96,0.4);background:rgba(240,192,96,0.1);border-radius:4px;color:var(--gold);font-family:'Press Start 2P',monospace;font-size:0.4rem;cursor:pointer;transition:all 0.1s;letter-spacing:1px;}
+.act-btn:active{background:rgba(240,192,96,0.3);transform:scale(0.95);}
+
+/* ── DIALOG BOX ── */
+#dialogBox{
+  position:absolute;bottom:0;left:0;right:0;
+  background:var(--ui-bg);border-top:2px solid var(--gold);
+  padding:12px 16px;min-height:90px;
+  display:none;z-index:50;
+}
+.dialog-name{font-size:0.45rem;color:var(--gold);margin-bottom:8px;letter-spacing:1px;}
+.dialog-text{font-size:0.5rem;color:var(--white);line-height:2;letter-spacing:0.5px;}
+.dialog-next{position:absolute;bottom:8px;right:12px;font-size:0.4rem;color:var(--gold);animation:blink 0.8s step-end infinite;}
+
+/* ── QA MODAL ── */
+#qaModal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:16px;
+  backdrop-filter:blur(4px);
+}
+.qa-box{background:#0a0a1e;border:2px solid var(--gold);border-radius:4px;max-width:480px;width:100%;padding:20px;}
+.qa-header{font-size:0.6rem;color:var(--gold);margin-bottom:16px;letter-spacing:2px;text-align:center;}
+.qa-q{font-size:0.5rem;color:var(--white);line-height:2.2;margin-bottom:16px;font-family:'Noto Serif TC',serif;font-size:0.85rem;}
+.qa-choices{display:flex;flex-direction:column;gap:8px;}
+.qa-c{padding:10px 14px;border:1px solid #333;background:rgba(255,255,255,0.04);color:var(--white);font-family:'Noto Serif TC',serif;font-size:0.82rem;cursor:pointer;border-radius:2px;text-align:left;transition:all 0.15s;line-height:1.5;}
+.qa-c:hover{border-color:var(--gold);background:rgba(240,192,96,0.1);}
+.qa-c.correct{border-color:#50c050;background:rgba(80,192,80,0.15);color:#80ff80;}
+.qa-c.wrong{border-color:#c05050;background:rgba(192,80,80,0.1);color:#ff8080;}
+.qa-verse{margin-top:14px;padding:10px 14px;border-left:2px solid var(--gold);font-family:'Noto Serif TC',serif;font-size:0.78rem;color:rgba(240,192,96,0.8);line-height:1.8;font-style:italic;display:none;}
+.qa-continue{margin-top:14px;width:100%;padding:10px;background:var(--gold);color:#000;font-family:'Press Start 2P',monospace;font-size:0.45rem;border:none;cursor:pointer;letter-spacing:2px;display:none;}
+
+/* ── TOAST ── */
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-40px);background:#000e;color:var(--gold);padding:8px 16px;font-size:0.45rem;letter-spacing:1px;border:1px solid var(--gold);z-index:300;opacity:0;transition:all 0.3s;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── LEVEL UP ── */
+#levelUp{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);}
+.levelup-box{text-align:center;animation:lvlpop 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes lvlpop{from{transform:scale(0);}to{transform:scale(1);}}
+.lvl-title{font-size:1.2rem;color:var(--gold);text-shadow:0 0 30px var(--gold);margin-bottom:16px;}
+.lvl-text{font-size:0.55rem;color:var(--white);line-height:2.5;margin-bottom:20px;}
+.lvl-btn{padding:10px 20px;background:var(--gold);color:#000;border:none;font-family:'Press Start 2P',monospace;font-size:0.5rem;cursor:pointer;letter-spacing:2px;}
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="titleScreen">
+  <div class="title-stars" id="titleStars"></div>
+  <div class="title-cross">✝</div>
+  <div class="title-text">信心之旅<br>FAITH JOURNEY</div>
+  <div class="title-sub">靈命成長動作冒險</div>
+  <div class="title-blink">▶ 按任意鍵開始 ◀</div>
+  <div class="title-verse">「我已經說了這些事，是要叫你們在我裡面有平安。<br>在世上你們有苦難；但你們可以放心，我已經勝了世界。」<br>約翰福音 16:33</div>
+</div>
+
+<!-- GAME -->
+<div id="gameWrapper">
+  <div id="hud">
+    <div>
+      <div class="hud-name" id="hudName">信徒 阿明</div>
+      <div class="hearts" id="hearts"></div>
+    </div>
+    <div class="hud-bars">
+      <div class="bar-row"><div class="bar-label">信心</div><div class="bar-track"><div class="bar-fill bar-faith" id="faithBar" style="width:60%"></div></div></div>
+      <div class="bar-row"><div class="bar-label">經驗</div><div class="bar-track"><div class="bar-fill bar-xp" id="xpBar" style="width:0%"></div></div></div>
+    </div>
+    <div class="hud-level">LV<span id="levelNum">1</span></div>
+    <div class="hud-keys" id="hudKeys"></div>
+  </div>
+
+  <div style="position:relative;width:100%;">
+    <canvas id="gameCanvas" width="400" height="280"></canvas>
+    <div id="dialogBox">
+      <div class="dialog-name" id="dialogName"></div>
+      <div class="dialog-text" id="dialogText"></div>
+      <div class="dialog-next">▼</div>
+    </div>
+  </div>
+
+  <div id="bottomBar">
+    <div class="equip-slots">
+      <div class="slot active" id="slot0">⚔️<div class="slot-label">信心劍</div></div>
+      <div class="slot" id="slot1">🛡️<div class="slot-label">聖言盾</div></div>
+      <div class="slot" id="slot2">📖<div class="slot-label">聖經</div></div>
+      <div class="slot" id="slot3">🙏<div class="slot-label">禱告</div></div>
+    </div>
+    <div class="dpad" id="dpad">
+      <div></div>
+      <div class="dpad-btn" id="dUp">▲</div>
+      <div></div>
+      <div class="dpad-btn" id="dLeft">◀</div>
+      <div class="dpad-btn dpad-center" id="dCenter">✝</div>
+      <div class="dpad-btn" id="dRight">▶</div>
+      <div></div>
+      <div class="dpad-btn" id="dDown">▼</div>
+      <div></div>
+    </div>
+    <div class="action-btns">
+      <button class="act-btn" id="btnA">⚔ 攻擊</button>
+      <button class="act-btn" id="btnB">🛡 防禦</button>
+      <button class="act-btn" id="btnX">📖 聖言</button>
+    </div>
+  </div>
+</div>
+
+<!-- QA MODAL -->
+<div id="qaModal">
+  <div class="qa-box">
+    <div class="qa-header">✝ 屬靈考驗 ✝</div>
+    <div class="qa-q" id="qaQuestion"></div>
+    <div class="qa-choices" id="qaChoices"></div>
+    <div class="qa-verse" id="qaVerse"></div>
+    <button class="qa-continue" id="qaContinue">繼續旅程 ▶</button>
+  </div>
+</div>
+
+<!-- LEVEL UP -->
+<div id="levelUp">
+  <div class="levelup-box">
+    <div class="lvl-title">✨ 靈命成長！✨</div>
+    <div class="lvl-text" id="lvlText"></div>
+    <button class="lvl-btn" onclick="closeLevelUp()">繼續 ▶</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// TITLE SCREEN
+// ══════════════════════════════════════════════════
+(function(){
+  const s=document.getElementById('titleStars');
+  for(let i=0;i<80;i++){
+    const d=document.createElement('div');
+    d.className='tstar';
+    const sz=1+Math.random()*2;
+    d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--dl:${Math.random()*5}s;--op:${0.4+Math.random()*0.6};`;
+    s.appendChild(d);
+  }
+})();
+
+document.getElementById('titleScreen').addEventListener('click',startGame);
+document.addEventListener('keydown',e=>{if(e.code&&document.getElementById('titleScreen').style.display!=='none')startGame();});
+
+function startGame(){
+  document.getElementById('titleScreen').style.display='none';
+  document.getElementById('gameWrapper').style.display='flex';
+  initGame();
+}
+
+// ══════════════════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════════════════
+const TILE=16;
+const COLS=25, ROWS=17; // 400x272
+
+let G={
+  hp:5, maxHp:5,
+  faith:60, maxFaith:100,
+  xp:0, xpNext:100,
+  level:1,
+  keys:0,
+  weapon:'sword', // sword|shield|bible|prayer
+  facing:'down',
+  invincible:0,
+  attackCooldown:0,
+  prayerCooldown:0,
+  score:0,
+};
+
+let player={x:200,y:160,vx:0,vy:0,width:14,height:14,moving:false,animFrame:0,animTimer:0};
+let enemies=[];
+let projectiles=[];
+let particles=[];
+let npcs=[];
+let chests=[];
+let portals=[];
+let keys_collected=[];
+let currentMap='city';
+let mapData={};
+let dialogQueue=[];
+let dialogOpen=false;
+let gameRunning=true;
+let frame=0;
+
+// ══════════════════════════════════════════════════
+// MAPS
+// ══════════════════════════════════════════════════
+// 0=floor, 1=wall, 2=water, 3=grass, 4=tree, 5=building
+function buildCityMap(){
+  const m=[];
+  for(let r=0;r<ROWS;r++){m.push([]);for(let c=0;c<COLS;c++)m[r].push(0);}
+  // Walls
+  for(let c=0;c<COLS;c++){m[0][c]=1;m[ROWS-1][c]=1;}
+  for(let r=0;r<ROWS;r++){m[r][0]=1;m[r][COLS-1]=1;}
+  // Buildings
+  [[1,1,4,5],[1,8,4,5],[1,15,4,4],[8,1,5,4],[8,8,5,5],[8,16,5,3],
+   [12,1,4,4],[12,10,4,4]].forEach(([r,c,h,w])=>{
+    for(let rr=r;rr<r+h&&rr<ROWS;rr++) for(let cc=c;cc<c+w&&cc<COLS;cc++) m[rr][cc]=5;
+  });
+  // Roads (horizontal and vertical cleared)
+  for(let c=1;c<COLS-1;c++){m[6][c]=0;m[7][c]=0;}
+  for(let r=1;r<ROWS-1;r++){m[r][5]=0;m[r][6]=0;m[r][13]=0;m[r][14]=0;}
+  // Grass patches
+  [[3,10],[3,11],[3,12],[4,10],[4,12],[10,10],[10,11],[11,10]].forEach(([r,c])=>{if(m[r][c]===0)m[r][c]=3;});
+  // Trees
+  [[2,10],[2,12],[9,10],[9,12]].forEach(([r,c])=>{m[r][c]=4;});
+  return m;
+}
+
+function buildChurchMap(){
+  const m=[];
+  for(let r=0;r<ROWS;r++){m.push([]);for(let c=0;c<COLS;c++)m[r].push(3);}
+  for(let c=0;c<COLS;c++){m[0][c]=4;m[ROWS-1][c]=4;}
+  for(let r=0;r<ROWS;r++){m[r][0]=4;m[r][COLS-1]=4;}
+  // Church interior (center)
+  for(let r=3;r<14;r++) for(let c=5;c<20;c++) m[r][c]=0;
+  // Pews
+  [[5,7],[5,10],[5,13],[5,16],[8,7],[8,10],[8,13],[8,16]].forEach(([r,c])=>{
+    for(let cc=c;cc<c+2;cc++) if(m[r][cc]===0) m[r][cc]=5;
+  });
+  // Altar
+  for(let c=8;c<17;c++) m[12][c]=5;
+  // Path
+  for(let r=3;r<ROWS-1;r++){m[r][12]=0;m[r][11]=0;}
+  return m;
+}
+
+function buildDungeonMap(){
+  const m=[];
+  for(let r=0;r<ROWS;r++){m.push([]);for(let c=0;c<COLS;c++)m[r].push(1);}
+  // Rooms
+  function room(r1,c1,r2,c2){for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) m[r][c]=0;}
+  room(1,1,8,10); room(1,13,8,23); room(10,1,15,10); room(10,13,15,23);
+  // Corridors
+  for(let c=10;c<=13;c++){m[4][c]=0;m[5][c]=0;}
+  for(let r=8;r<=10;r++){m[r][5]=0;m[r][6]=0;m[r][18]=0;m[r][19]=0;}
+  // Water hazards
+  [[3,3],[3,4],[4,3],[4,4],[3,18],[3,19],[4,18]].forEach(([r,c])=>{m[r][c]=2;});
+  return m;
+}
+
+// ══════════════════════════════════════════════════
+// COLORS
+// ══════════════════════════════════════════════════
+const TILE_COLORS={
+  0:'#2a2a3a', // floor - dark
+  1:'#1a1a28', // wall
+  2:'#1a3060', // water
+  3:'#1a3a1a', // grass
+  4:'#0a2010', // tree
+  5:'#3a3a4a', // building
+};
+const FLOOR_DETAIL={
+  0:'#2e2e40',
+  3:'#204020',
+};
+
+// ══════════════════════════════════════════════════
+// ENTITY DEFINITIONS
+// ══════════════════════════════════════════════════
+const ENEMY_TYPES={
+  doubt:{name:'疑惑怪',color:'#6030a0',hp:2,dmg:1,speed:0.6,xp:20,size:12,
+    verse:'「你這小信的人哪，為什麼疑惑呢？」— 馬太福音 14:31'},
+  pride:{name:'驕傲怪',color:'#a03030',hp:3,dmg:1,speed:0.5,xp:30,size:14,
+    verse:'「驕傲在敗壞以先，狂心在跌倒之前。」— 箴言 16:18'},
+  fear:{name:'懼怕靈',color:'#304080',hp:2,dmg:2,speed:0.8,xp:25,size:11,
+    verse:'「神賜給我們的不是膽怯的心，乃是剛強、仁愛、謹守的心。」— 提摩太後書 1:7'},
+  temptation:{name:'試探魔',color:'#803020',hp:4,dmg:2,speed:0.4,xp:40,size:15,
+    verse:'「你們所遇見的試探，無非是人所能受的；神是信實的，必不叫你們受試探過於所能受的。」— 哥林多前書 10:13'},
+};
+
+const NPC_SCRIPTS={
+  pastor:{name:'牧師',color:'#8080ff',
+    lines:['神的平安與你同在，孩子。','你的旅程剛開始，要靠主的力量前行。','記住：「你們要先求他的國和他的義。」（太6:33）']},
+  elder:{name:'長老',color:'#ff8040',
+    lines:['信心如同肌肉，需要每天操練。','禱告是與神溝通的橋樑，不可忽視。','聖言是你的雙刃劍，要熟讀！']},
+  youth:{name:'年輕信徒',color:'#40ff80',
+    lines:['你好！我也在學習信心的功課。','昨天我打敗了疑惑怪！','要加油哦，一起為主作見證！']},
+  angel:{name:'天使',color:'#ffffa0',
+    lines:['奉主命令來幫助你。','前方有強大的試探魔，要先強化信心！','這把「信心之劍」賜給你，願主同在。']},
+};
+
+// ══════════════════════════════════════════════════
+// BIBLE QA
+// ══════════════════════════════════════════════════
+const QA=[
+  {q:'約翰福音3:16說，神賜下獨生子是要讓信祂的人怎樣？',c:['得享富貴','不至滅亡，反得永生','成為完全','立刻升天'],a:1,
+   v:'神愛世人，甚至將他的獨生子賜給他們，叫一切信他的，不至滅亡，反得永生。—— 約翰福音 3:16'},
+  {q:'「愛是恆久忍耐，又有恩慈」出自哪裡？',c:['羅馬書12章','詩篇23篇','哥林多前書13章','以弗所書4章'],a:2,
+   v:'愛是恆久忍耐，又有恩慈；愛是不嫉妒；愛是不自誇，不張狂。—— 哥林多前書 13:4'},
+  {q:'「敬畏耶和華是智慧的開端」出自哪裡？',c:['箴言9:10','傳道書1:1','詩篇1:1','約伯記28:28'],a:0,
+   v:'敬畏耶和華是智慧的開端；認識至聖者便是聰明。—— 箴言 9:10'},
+  {q:'神賜給我們的心靈是什麼？（提摩太後書1:7）',c:['膽怯的心','疑惑的心','剛強、仁愛、謹守的心','軟弱的心'],a:2,
+   v:'神賜給我們的不是膽怯的心，乃是剛強、仁愛、謹守的心。—— 提摩太後書 1:7'},
+  {q:'「驕傲在敗壞以先」下一句是？',c:['謙遜在榮耀之前','狂心在跌倒之前','軟弱在失敗之前','罪惡在審判之前'],a:1,
+   v:'驕傲在敗壞以先，狂心在跌倒之前。—— 箴言 16:18'},
+  {q:'腓立比書4:13說：「我靠著那加給我力量的，凡事都能做。」這句話的上下文是關於？',c:['成功與失敗','知足與順命','戰勝仇敵','財富與貧窮'],a:1,
+   v:'我學會了，無論在什麼狀態可以知足，這是很深的道理。我靠著那加給我力量的，凡事都能做。—— 腓立比書 4:11,13'},
+];
+
+// ══════════════════════════════════════════════════
+// LEVEL UP DATA
+// ══════════════════════════════════════════════════
+const LEVEL_DATA=[
+  {title:'初信者',bonus:'HP +1，解鎖「聖言盾」',desc:'「你們若常常遵守我的道，就真是我的門徒。」（約8:31）'},
+  {title:'追求者',bonus:'信心 +20，解鎖「禱告」',desc:'「你們祈求，就給你們；尋找，就尋見。」（太7:7）'},
+  {title:'門徒',bonus:'HP +1，攻擊力提升',desc:'「我奉差遣，本是服事人，不是受人的服事。」（太20:28）'},
+  {title:'執事',bonus:'解鎖「聖靈之火」技能',desc:'「各人要照所得的恩賜彼此服事。」（彼前4:10）'},
+  {title:'牧者',bonus:'全屬性提升，解鎖最終地圖',desc:'「你餵養我的羊。」（約21:17）'},
+];
+
+// ══════════════════════════════════════════════════
+// CANVAS & CTX
+// ══════════════════════════════════════════════════
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+ctx.imageSmoothingEnabled=false;
+
+// ══════════════════════════════════════════════════
+// INPUT
+// ══════════════════════════════════════════════════
+const keys={};
+document.addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();});
+document.addEventListener('keyup',e=>{keys[e.code]=false;});
+
+// D-pad
+function dpadPress(dir){
+  if(dir==='up') keys['ArrowUp']=true;
+  if(dir==='down') keys['ArrowDown']=true;
+  if(dir==='left') keys['ArrowLeft']=true;
+  if(dir==='right') keys['ArrowRight']=true;
+}
+function dpadRelease(){
+  ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].forEach(k=>keys[k]=false);
+}
+['Up','Down','Left','Right'].forEach(d=>{
+  const el=document.getElementById('d'+d);
+  el.addEventListener('pointerdown',e=>{e.preventDefault();dpadPress(d.toLowerCase());});
+  el.addEventListener('pointerup',e=>{e.preventDefault();dpadRelease();});
+  el.addEventListener('pointerleave',()=>dpadRelease());
+});
+document.getElementById('btnA').addEventListener('pointerdown',e=>{e.preventDefault();attack();});
+document.getElementById('btnB').addEventListener('pointerdown',e=>{e.preventDefault();defend();});
+document.getElementById('btnX').addEventListener('pointerdown',e=>{e.preventDefault();useScripture();});
+document.addEventListener('keydown',e=>{
+  if(e.code==='Space') attack();
+  if(e.code==='KeyX') defend();
+  if(e.code==='KeyZ') useScripture();
+  if(e.code==='Enter'&&dialogOpen) advanceDialog();
+});
+canvas.addEventListener('pointerdown',e=>{if(dialogOpen)advanceDialog();});
+
+// Slots
+for(let i=0;i<4;i++){
+  document.getElementById('slot'+i).addEventListener('click',()=>selectSlot(i));
+}
+const SLOT_WEAPONS=['sword','shield','bible','prayer'];
+function selectSlot(i){
+  document.querySelectorAll('.slot').forEach((s,j)=>s.classList.toggle('active',j===i));
+  G.weapon=SLOT_WEAPONS[i];
+  showToast(i===0?'裝備：信心之劍⚔️':i===1?'裝備：聖言之盾🛡️':i===2?'裝備：聖經📖':'裝備：禱告🙏');
+}
+
+// ══════════════════════════════════════════════════
+// GAME INIT
+// ══════════════════════════════════════════════════
+function initGame(){
+  mapData.city=buildCityMap();
+  mapData.church=buildChurchMap();
+  mapData.dungeon=buildDungeonMap();
+  currentMap='city';
+  player.x=192; player.y=160;
+
+  spawnEntities();
+  updateHUD();
+  requestAnimationFrame(gameLoop);
+
+  setTimeout(()=>openDialog('天使','歡迎來到信心之旅！\n你是一位現代的青年信徒，\n城市中充滿了屬靈的黑暗勢力。\n用信心之劍對抗，靠聖言得勝！'),800);
+}
+
+function spawnEntities(){
+  enemies=[];npcs=[];chests=[];portals=[];
+
+  if(currentMap==='city'){
+    // Enemies
+    spawnEnemy(100,80,'doubt');
+    spawnEnemy(280,100,'fear');
+    spawnEnemy(320,200,'doubt');
+    spawnEnemy(60,220,'pride');
+    // NPCs
+    npcs.push({x:120,y:160,type:'pastor',talked:false});
+    npcs.push({x:240,y:80,type:'youth',talked:false});
+    // Chests
+    chests.push({x:340,y:260,open:false,item:'faith_crystal'});
+    chests.push({x:50,y:50,open:false,item:'key'});
+    // Portals
+    portals.push({x:192,y:8,target:'church',tx:192,ty:240,color:'#8080ff',label:'教會'});
+    portals.push({x:192,y:264,target:'dungeon',tx:192,ty:40,color:'#ff4040',label:'黑暗之地'});
+  } else if(currentMap==='church'){
+    npcs.push({x:192,y:120,type:'pastor',talked:false});
+    npcs.push({x:120,y:80,type:'elder',talked:false});
+    npcs.push({x:280,y:80,type:'angel',talked:false});
+    chests.push({x:192,y:200,open:false,item:'max_hp'});
+    portals.push({x:192,y:260,target:'city',tx:192,ty:250,color:'#40ff80',label:'回城市'});
+  } else {
+    spawnEnemy(60,60,'temptation');
+    spawnEnemy(300,60,'pride');
+    spawnEnemy(60,220,'fear');
+    spawnEnemy(300,220,'temptation');
+    spawnEnemy(192,140,'pride');
+    chests.push({x:320,y:220,open:false,item:'key'});
+    chests.push({x:60,y:220,open:false,item:'faith_crystal'});
+    portals.push({x:192,y:8,target:'city',tx:192,ty:40,color:'#40ff80',label:'回城市'});
+  }
+}
+
+function spawnEnemy(x,y,type){
+  const t=ENEMY_TYPES[type];
+  enemies.push({x,y,type,hp:t.hp,maxHp:t.hp,vx:0,vy:0,
+    size:t.size,color:t.color,speed:t.speed,
+    ai_timer:Math.random()*60,
+    hit_flash:0,name:t.name});
+}
+
+// ══════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════
+function attack(){
+  if(dialogOpen||G.attackCooldown>0) return;
+  G.attackCooldown=20;
+
+  let dx=0,dy=0;
+  if(G.facing==='up') dy=-1;
+  else if(G.facing==='down') dy=1;
+  else if(G.facing==='left') dx=-1;
+  else dx=1;
+
+  if(G.weapon==='sword'){
+    // Melee arc
+    enemies.forEach(e=>{
+      const dist=Math.hypot(e.x-player.x,e.y-player.y);
+      if(dist<36){
+        const dmg=1+(G.level>3?1:0);
+        e.hp-=dmg;
+        e.hit_flash=12;
+        spawnParticles(e.x,e.y,'#ffffa0',6);
+        if(e.hp<=0) killEnemy(e);
+      }
+    });
+    spawnParticles(player.x+dx*20,player.y+dy*20,'#f0c060',4);
+  } else if(G.weapon==='bible'){
+    // Projectile
+    projectiles.push({x:player.x,y:player.y,vx:dx*4,vy:dy*4,life:60,color:'#ffffa0',dmg:2,type:'word'});
+  } else if(G.weapon==='prayer'){
+    useScripture();
+  } else if(G.weapon==='shield'){
+    defend();
+  }
+}
+
+function defend(){
+  if(dialogOpen) return;
+  G.faith=Math.min(G.maxFaith,G.faith+15);
+  spawnParticles(player.x,player.y,'#8080ff',8);
+  showToast('🛡️ 舉起聖言之盾！信心恢復');
+  updateHUD();
+}
+
+function useScripture(){
+  if(dialogOpen||G.prayerCooldown>0) return;
+  G.prayerCooldown=120;
+  // Holy wave AOE
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2;
+    projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*3,vy:Math.sin(a)*3,life:40,color:'#ffffff',dmg:1,type:'holy'});
+  }
+  spawnParticles(player.x,player.y,'#ffffff',12);
+  showToast('📖 聖言之力！願主話語驅散黑暗');
+}
+
+// ══════════════════════════════════════════════════
+// GAME LOOP
+// ══════════════════════════════════════════════════
+function gameLoop(){
+  if(!gameRunning){requestAnimationFrame(gameLoop);return;}
+  frame++;
+  update();
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+function update(){
+  if(dialogOpen) return;
+  if(document.getElementById('qaModal').style.display==='flex') return;
+  if(document.getElementById('levelUp').style.display==='flex') return;
+
+  updatePlayer();
+  updateEnemies();
+  updateProjectiles();
+  updateParticles();
+  checkCollisions();
+  checkInteractions();
+  if(G.attackCooldown>0) G.attackCooldown--;
+  if(G.prayerCooldown>0) G.prayerCooldown--;
+  if(G.invincible>0) G.invincible--;
+}
+
+function updatePlayer(){
+  let mx=0,my=0;
+  if(keys['ArrowLeft']){mx=-2;G.facing='left';}
+  if(keys['ArrowRight']){mx=2;G.facing='right';}
+  if(keys['ArrowUp']){my=-2;G.facing='up';}
+  if(keys['ArrowDown']){my=2;G.facing='down';}
+
+  // Diagonal normalize
+  if(mx!==0&&my!==0){mx*=0.707;my*=0.707;}
+
+  const nx=player.x+mx, ny=player.y+my;
+  if(!isWall(nx,player.y)) player.x=nx;
+  if(!isWall(player.x,ny)) player.y=ny;
+
+  player.x=Math.max(8,Math.min(canvas.width-8,player.x));
+  player.y=Math.max(8,Math.min(canvas.height-8,player.y));
+
+  player.moving=mx!==0||my!==0;
+  if(player.moving){
+    player.animTimer++;
+    if(player.animTimer>8){player.animFrame=(player.animFrame+1)%4;player.animTimer=0;}
+  }
+}
+
+function isWall(x,y){
+  const col=Math.floor(x/TILE), row=Math.floor(y/TILE);
+  if(row<0||row>=ROWS||col<0||col>=COLS) return true;
+  const t=mapData[currentMap][row][col];
+  return t===1||t===4||t===5;
+}
+
+function updateEnemies(){
+  enemies.forEach(e=>{
+    if(e.hp<=0) return;
+    e.ai_timer--;
+    if(e.ai_timer<=0){
+      e.ai_timer=30+Math.random()*40;
+      const dx=player.x-e.x, dy=player.y-e.y;
+      const dist=Math.hypot(dx,dy);
+      if(dist<150){
+        const spd=e.speed*(G.faith<30?0.7:1); // faith affects speed
+        e.vx=dx/dist*spd;
+        e.vy=dy/dist*spd;
+      } else {
+        e.vx=(Math.random()-0.5)*1.5;
+        e.vy=(Math.random()-0.5)*1.5;
+      }
+    }
+    const nx=e.x+e.vx, ny=e.y+e.vy;
+    if(!isWall(nx,e.y)) e.x=nx;
+    if(!isWall(e.x,ny)) e.y=ny;
+    e.x=Math.max(8,Math.min(canvas.width-8,e.x));
+    e.y=Math.max(8,Math.min(canvas.height-8,e.y));
+    if(e.hit_flash>0) e.hit_flash--;
+  });
+  enemies=enemies.filter(e=>e.hp>0);
+}
+
+function updateProjectiles(){
+  projectiles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;});
+  projectiles=projectiles.filter(p=>p.life>0&&!isWall(p.x,p.y));
+}
+
+function updateParticles(){
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;p.vy+=0.05;});
+  particles=particles.filter(p=>p.life>0);
+}
+
+function checkCollisions(){
+  // Projectile -> enemy
+  projectiles.forEach(proj=>{
+    enemies.forEach(e=>{
+      if(Math.hypot(e.x-proj.x,e.y-proj.y)<e.size/2+4){
+        e.hp-=proj.dmg;
+        e.hit_flash=12;
+        spawnParticles(e.x,e.y,'#ffffa0',4);
+        proj.life=0;
+        if(e.hp<=0) killEnemy(e);
+      }
+    });
+  });
+
+  // Enemy -> player
+  if(G.invincible===0){
+    enemies.forEach(e=>{
+      if(Math.hypot(e.x-player.x,e.y-player.y)<e.size/2+8){
+        const t=ENEMY_TYPES[e.type];
+        G.hp=Math.max(0,G.hp-t.dmg);
+        G.faith=Math.max(0,G.faith-10);
+        G.invincible=60;
+        spawnParticles(player.x,player.y,'#ff4040',8);
+        updateHUD();
+        if(G.hp<=0) gameOver();
+      }
+    });
+  }
+
+  // Player -> chest
+  chests.forEach(c=>{
+    if(!c.open&&Math.hypot(c.x-player.x,c.y-player.y)<20){
+      c.open=true;
+      openChest(c);
+    }
+  });
+
+  // Player -> portal
+  portals.forEach(p=>{
+    if(Math.hypot(p.x-player.x,p.y-player.y)<14){
+      changeMap(p.target,p.tx,p.ty);
+    }
+  });
+}
+
+function checkInteractions(){
+  npcs.forEach(n=>{
+    if(!n.talked&&Math.hypot(n.x-player.x,n.y-player.y)<24){
+      n.talked=true;
+      const s=NPC_SCRIPTS[n.type];
+      openDialog(s.name,s.lines.join('\n'));
+    }
+  });
+}
+
+function killEnemy(e){
+  const t=ENEMY_TYPES[e.type];
+  spawnParticles(e.x,e.y,'#ffffa0',12);
+  spawnParticles(e.x,e.y,'#ffffff',6);
+  gainXP(t.xp);
+  showToast(`✨ 擊敗「${e.name}」！+${t.xp}XP`);
+  // Show verse after killing
+  setTimeout(()=>showVerseToast(t.verse),1200);
+}
+
+function showVerseToast(verse){showToast('📖 '+verse.substring(0,30)+'...');}
+
+function openChest(c){
+  spawnParticles(c.x,c.y,'#f0c060',10);
+  if(c.item==='faith_crystal'){
+    G.faith=Math.min(G.maxFaith,G.faith+30);
+    showToast('💎 獲得信心水晶！信心 +30');
+    updateHUD();
+  } else if(c.item==='key'){
+    G.keys++;
+    updateHUD();
+    showToast('🗝️ 獲得天國鑰匙！');
+  } else if(c.item==='max_hp'){
+    G.maxHp++;G.hp=G.maxHp;
+    showToast('❤️ 生命增加！最大HP +1');
+    updateHUD();
+  }
+  // Trigger QA
+  setTimeout(()=>triggerQA(),1000);
+}
+
+function changeMap(target,tx,ty){
+  currentMap=target;
+  player.x=tx;player.y=ty;
+  spawnEntities();
+  showToast(`進入：${target==='city'?'城市':target==='church'?'聖殿':'黑暗之地'}`);
+  if(target==='church') openDialog('天使','歡迎來到聖殿！\n這裡是信徒聚集、靈命得力的地方。\n與NPC交談可獲得裝備和指引。');
+  if(target==='dungeon') openDialog('天使','小心！前方是黑暗之地。\n這裡充滿了試探和靈裡的黑暗。\n靠主的力量，必能得勝！');
+}
+
+function gainXP(amount){
+  G.xp+=amount;
+  G.score+=amount;
+  if(G.xp>=G.xpNext){
+    G.xp-=G.xpNext;
+    G.level++;
+    G.xpNext=Math.floor(G.xpNext*1.5);
+    levelUp();
+  }
+  updateHUD();
+}
+
+function levelUp(){
+  const ld=LEVEL_DATA[Math.min(G.level-2,LEVEL_DATA.length-1)];
+  document.getElementById('lvlText').innerHTML=
+    `靈命等級 Lv.${G.level}\n稱號：${ld.title}\n\n${ld.bonus}\n\n「${ld.desc}」`;
+  document.getElementById('levelUp').style.display='flex';
+  spawnParticles(player.x,player.y,'#f0c060',20);
+  G.hp=G.maxHp; // restore on level up
+  G.faith=G.maxFaith;
+  updateHUD();
+}
+
+function closeLevelUp(){
+  document.getElementById('levelUp').style.display='none';
+}
+
+function gameOver(){
+  gameRunning=false;
+  openDialog('天使','你被黑暗擊倒了...\n但不要灰心！\n「義人雖七次跌倒，仍必興起。」\n（箴言 24:16）\n按任意鍵重新開始。');
+  setTimeout(()=>{
+    gameRunning=true;
+    G.hp=G.maxHp;G.faith=60;
+    player.x=192;player.y=160;
+    currentMap='city';spawnEntities();updateHUD();
+  },3000);
+}
+
+// ══════════════════════════════════════════════════
+// DIALOG
+// ══════════════════════════════════════════════════
+let dialogLines=[], dialogIdx=0, dialogCurrent='';
+function openDialog(name,text){
+  dialogLines=text.split('\n');
+  dialogIdx=0;
+  document.getElementById('dialogName').textContent=name;
+  document.getElementById('dialogBox').style.display='block';
+  dialogOpen=true;
+  typeDialogLine();
+}
+
+let typeTimer=null;
+function typeDialogLine(){
+  clearInterval(typeTimer);
+  const line=dialogLines[dialogIdx]||'';
+  document.getElementById('dialogText').textContent='';
+  let i=0;
+  typeTimer=setInterval(()=>{
+    document.getElementById('dialogText').textContent+=line[i]||'';
+    i++;if(i>=line.length) clearInterval(typeTimer);
+  },40);
+}
+
+function advanceDialog(){
+  clearInterval(typeTimer);
+  const line=dialogLines[dialogIdx]||'';
+  document.getElementById('dialogText').textContent=line;
+  dialogIdx++;
+  if(dialogIdx>=dialogLines.length){
+    document.getElementById('dialogBox').style.display='none';
+    dialogOpen=false;
+  } else {
+    typeDialogLine();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// BIBLE QA
+// ══════════════════════════════════════════════════
+let currentQA=null;
+function triggerQA(){
+  currentQA=QA[Math.floor(Math.random()*QA.length)];
+  document.getElementById('qaQuestion').textContent=currentQA.q;
+  const ch=document.getElementById('qaChoices');
+  ch.innerHTML='';
+  currentQA.c.forEach((c,i)=>{
+    const b=document.createElement('button');
+    b.className='qa-c';b.textContent=c;
+    b.onclick=()=>answerQA(i);
+    ch.appendChild(b);
+  });
+  document.getElementById('qaVerse').style.display='none';
+  document.getElementById('qaContinue').style.display='none';
+  document.getElementById('qaModal').style.display='flex';
+}
+
+function answerQA(idx){
+  document.querySelectorAll('.qa-c').forEach((b,i)=>{
+    b.onclick=null;
+    if(i===currentQA.a) b.classList.add('correct');
+    else if(i===idx) b.classList.add('wrong');
+  });
+  document.getElementById('qaVerse').textContent=currentQA.v;
+  document.getElementById('qaVerse').style.display='block';
+  document.getElementById('qaContinue').style.display='block';
+
+  if(idx===currentQA.a){
+    G.faith=Math.min(G.maxFaith,G.faith+25);
+    G.xp+=30;
+    showToast('✅ 答對！信心 +25，XP +30');
+  } else {
+    showToast('📖 繼續學習聖言，加油！');
+  }
+  updateHUD();
+  document.getElementById('qaContinue').onclick=()=>{
+    document.getElementById('qaModal').style.display='none';
+  };
+}
+
+// ══════════════════════════════════════════════════
+// PARTICLES
+// ══════════════════════════════════════════════════
+function spawnParticles(x,y,color,count){
+  for(let i=0;i<count;i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=1+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-2,
+      life:20+Math.random()*20,color,size:2+Math.random()*2});
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+function render(){
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const map=mapData[currentMap];
+  if(!map) return;
+
+  // TILES
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const t=map[r][c];
+      const x=c*TILE, y=r*TILE;
+      ctx.fillStyle=TILE_COLORS[t]||'#222';
+      ctx.fillRect(x,y,TILE,TILE);
+
+      // Detail
+      if(FLOOR_DETAIL[t]&&frame%3===0||(t===0||t===3)){
+        ctx.fillStyle=FLOOR_DETAIL[t]||'transparent';
+        if(((r*7+c*13)%5===0)){
+          ctx.fillRect(x+2,y+2,2,2);
+        }
+      }
+
+      // Wall shade
+      if(t===1){
+        ctx.fillStyle='rgba(255,255,255,0.04)';
+        ctx.fillRect(x,y,TILE,3);
+        ctx.fillStyle='rgba(0,0,0,0.3)';
+        ctx.fillRect(x,y+TILE-3,TILE,3);
+      }
+      // Water animation
+      if(t===2){
+        ctx.fillStyle=`rgba(100,160,255,${0.1+Math.sin(frame*0.05+c+r)*0.1})`;
+        ctx.fillRect(x,y,TILE,TILE);
+      }
+      // Tree
+      if(t===4){
+        ctx.fillStyle='#0a4020';
+        ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
+        ctx.fillStyle='#0d5028';
+        ctx.fillRect(x+4,y+4,TILE-8,TILE-8);
+      }
+    }
+  }
+
+  // PORTALS
+  portals.forEach(p=>{
+    const pulse=Math.sin(frame*0.1)*3;
+    ctx.fillStyle=p.color;ctx.globalAlpha=0.4+Math.sin(frame*0.08)*0.15;
+    ctx.beginPath();ctx.arc(p.x,p.y,10+pulse,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;ctx.fillStyle=p.color;
+    ctx.fillRect(p.x-1,p.y-12,2,24);
+    ctx.fillRect(p.x-12,p.y-1,24,2);
+    // Label
+    ctx.font='5px "Press Start 2P"';ctx.fillStyle=p.color;
+    ctx.textAlign='center';ctx.fillText(p.label,p.x,p.y+20);
+  });
+
+  // CHESTS
+  chests.forEach(c=>{
+    ctx.fillStyle=c.open?'#666':'#c08020';
+    ctx.fillRect(c.x-7,c.y-6,14,12);
+    if(!c.open){
+      ctx.fillStyle='#ffd700';
+      ctx.fillRect(c.x-2,c.y-2,4,4);
+      // Sparkle
+      if(frame%20<10){
+        ctx.fillStyle='#fff';
+        ctx.fillRect(c.x-8,c.y-8,2,2);ctx.fillRect(c.x+6,c.y-8,2,2);
+      }
+    }
+  });
+
+  // NPCs
+  npcs.forEach(n=>{
+    const s=NPC_SCRIPTS[n.type];
+    // Body
+    ctx.fillStyle=s.color;
+    ctx.fillRect(n.x-5,n.y-4,10,12);
+    // Head
+    ctx.fillStyle='#ffcc99';
+    ctx.fillRect(n.x-4,n.y-12,8,8);
+    // Exclamation if not talked
+    if(!n.talked){
+      ctx.fillStyle='#ffff00';
+      ctx.font='8px "Press Start 2P"';
+      ctx.textAlign='center';
+      ctx.fillText('!',n.x,n.y-16);
+    }
+  });
+
+  // ENEMIES
+  enemies.forEach(e=>{
+    if(e.hp<=0) return;
+    const flash=e.hit_flash>0&&e.hit_flash%3<2;
+    ctx.fillStyle=flash?'#ffffff':e.color;
+    const bob=Math.sin(frame*0.15+e.x)*2;
+    const s=e.size/2;
+    ctx.fillRect(e.x-s,e.y-s+bob,e.size,e.size);
+    // Eyes
+    ctx.fillStyle='#ff2020';
+    ctx.fillRect(e.x-3,e.y-2+bob,2,2);
+    ctx.fillRect(e.x+1,e.y-2+bob,2,2);
+    // HP bar
+    const bw=e.size+4;
+    ctx.fillStyle='#333';ctx.fillRect(e.x-bw/2,e.y-s-8+bob,bw,3);
+    ctx.fillStyle='#ff4040';ctx.fillRect(e.x-bw/2,e.y-s-8+bob,bw*(e.hp/e.maxHp),3);
+    // Name
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='4px "Press Start 2P"';
+    ctx.textAlign='center';ctx.fillText(e.name,e.x,e.y-s-10+bob);
+  });
+
+  // PROJECTILES
+  projectiles.forEach(p=>{
+    ctx.fillStyle=p.color;
+    ctx.globalAlpha=p.type==='holy'?0.8:1;
+    if(p.type==='word'){
+      ctx.font='8px serif';ctx.textAlign='center';
+      ctx.fillText('✝',p.x,p.y);
+    } else {
+      ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  });
+
+  // PARTICLES
+  particles.forEach(p=>{
+    ctx.fillStyle=p.color;
+    ctx.globalAlpha=p.life/40;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+    ctx.globalAlpha=1;
+  });
+
+  // PLAYER
+  drawPlayer();
+
+  // Attack flash
+  if(G.attackCooldown>15){
+    ctx.fillStyle='rgba(255,255,160,0.15)';
+    ctx.beginPath();
+    let ax=player.x,ay=player.y;
+    if(G.facing==='right') ax+=20;
+    if(G.facing==='left') ax-=20;
+    if(G.facing==='down') ay+=20;
+    if(G.facing==='up') ay-=20;
+    ctx.arc(ax,ay,20,0,Math.PI*2);ctx.fill();
+  }
+
+  // Invincible blink
+  if(G.invincible>0&&G.invincible%6<3) return; // skip draw below
+}
+
+function drawPlayer(){
+  const x=player.x, y=player.y;
+  const bob=player.moving?Math.sin(frame*0.25)*2:0;
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();ctx.ellipse(x,y+7,6,3,0,0,Math.PI*2);ctx.fill();
+
+  // Cloak / body
+  ctx.fillStyle='#4060c0';
+  ctx.fillRect(x-5,y-2+bob,10,12);
+
+  // Head
+  ctx.fillStyle='#ffcc99';
+  ctx.fillRect(x-4,y-11+bob,8,8);
+
+  // Eyes (direction)
+  ctx.fillStyle='#204080';
+  if(G.facing==='down'){ctx.fillRect(x-2,y-5+bob,2,2);ctx.fillRect(x+1,y-5+bob,2,2);}
+  else if(G.facing==='up'){ctx.fillStyle='#204080';ctx.fillRect(x-2,y-9+bob,2,1);ctx.fillRect(x+1,y-9+bob,2,1);}
+  else if(G.facing==='left'){ctx.fillRect(x-3,y-6+bob,2,2);}
+  else{ctx.fillRect(x+2,y-6+bob,2,2);}
+
+  // Weapon
+  if(G.weapon==='sword'&&G.attackCooldown>10){
+    ctx.fillStyle='#c0d0ff';
+    if(G.facing==='right') ctx.fillRect(x+6,y-8+bob,12,3);
+    else if(G.facing==='left') ctx.fillRect(x-18,y-8+bob,12,3);
+    else if(G.facing==='up') ctx.fillRect(x-1,y-22+bob,3,12);
+    else ctx.fillRect(x-1,y+10+bob,3,12);
+  }
+
+  // Cross on chest
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.fillRect(x-1,y+1+bob,2,6);ctx.fillRect(x-3,y+3+bob,6,2);
+
+  // Halo (faith indicator)
+  if(G.faith>70){
+    ctx.strokeStyle=`rgba(255,220,80,${0.3+Math.sin(frame*0.1)*0.2})`;
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(x,y-12+bob,8,0,Math.PI*2);ctx.stroke();
+  }
+}
+
+// ══════════════════════════════════════════════════
+// HUD UPDATE
+// ══════════════════════════════════════════════════
+function updateHUD(){
+  const hh=document.getElementById('hearts');
+  hh.innerHTML='';
+  for(let i=0;i<G.maxHp;i++){
+    const d=document.createElement('div');
+    d.className='heart'+(i>=G.hp?' empty':'');
+    hh.appendChild(d);
+  }
+  document.getElementById('faithBar').style.width=(G.faith/G.maxFaith*100)+'%';
+  document.getElementById('xpBar').style.width=(G.xp/G.xpNext*100)+'%';
+  document.getElementById('levelNum').textContent=G.level;
+  const ki=document.getElementById('hudKeys');
+  ki.innerHTML='';
+  for(let i=0;i<G.keys;i++){const k=document.createElement('div');k.className='key-item';k.textContent='🗝️';ki.appendChild(k);}
+}
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+let toastT;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
