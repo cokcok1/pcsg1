@@ -2,48 +2,61 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
     <title>行車里數記錄本</title>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
         :root {
-            --primary-color: #2563eb;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --text-color: #1e293b;
+            --primary: #2563eb;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --muted: #64748b;
         }
 
         * {
             box-sizing: border-box;
+        }
+
+        body {
             margin: 0;
-            padding: 0;
+            padding: 16px;
+            padding-bottom: max(30px, env(safe-area-inset-bottom));
+            background: var(--background);
+            color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont,
                 "Segoe UI", Roboto, sans-serif;
         }
 
-        body {
-            background: var(--bg-color);
-            color: var(--text-color);
-            padding: 15px;
-            padding-bottom: 40px;
+        [hidden] {
+            display: none !important;
         }
 
         .container {
-            max-width: 600px;
+            max-width: 760px;
             margin: 0 auto;
         }
 
+        .container,
+        .card,
+        .form-group,
+        .table-container {
+            min-width: 0;
+        }
+
         h1 {
+            margin: 8px 0 22px;
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 24px;
             color: #1e3a8a;
+            font-size: 25px;
         }
 
         h2 {
-            margin-bottom: 12px;
+            margin: 0 0 16px;
             font-size: 20px;
         }
 
@@ -52,34 +65,38 @@
         }
 
         .card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(15, 23, 42, 0.06);
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 7px;
             font-size: 14px;
+            font-weight: 600;
         }
 
         input,
         textarea,
         select {
+            display: block;
             width: 100%;
+            max-width: 100%;
+            min-width: 0;
             padding: 12px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
-            font-size: 16px;
             background: white;
-            color: var(--text-color);
+            color: var(--text);
+            font: inherit;
+            font-size: 16px;
         }
 
         input,
@@ -87,56 +104,106 @@
             -webkit-appearance: none;
         }
 
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid #bfdbfe;
+            outline-offset: 1px;
+            border-color: var(--primary);
+        }
+
         textarea {
             resize: vertical;
         }
 
+        button {
+            font-family: inherit;
+            touch-action: manipulation;
+        }
+
         .btn {
+            display: block;
             width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
+            min-height: 46px;
             margin-bottom: 10px;
+            padding: 12px;
+            border: 0;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .btn-primary {
-            background: var(--primary-color);
-            color: white;
+            background: var(--primary);
         }
 
         .btn-success {
-            background: #16a34a;
-            color: white;
+            background: #15803d;
         }
 
         .btn-secondary {
             background: #475569;
-            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
         }
 
         .btn-danger {
+            min-height: 44px;
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 8px;
             background: #dc2626;
             color: white;
-            padding: 6px 12px;
-            font-size: 12px;
-            border: none;
-            border-radius: 4px;
+            font-size: 14px;
             cursor: pointer;
             white-space: nowrap;
         }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .action-grid,
+        .form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 12px;
         }
 
-        .action-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        .hint {
+            margin: 0 0 14px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        #totalDistance {
+            border-color: #16a34a;
+            color: #15803d;
+            font-weight: 700;
+        }
+
+        #statusBox {
+            padding: 14px 16px;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            box-shadow: none;
+        }
+
+        #status {
+            margin: 0;
+            color: #1e40af;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #statusBox.error {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+
+        #statusBox.error #status {
+            color: #991b1b;
         }
 
         .table-container {
@@ -145,15 +212,15 @@
 
         table {
             width: 100%;
+            margin-top: 12px;
             border-collapse: collapse;
-            margin-top: 10px;
             font-size: 14px;
         }
 
         th,
         td {
+            padding: 11px;
             border: 1px solid #e2e8f0;
-            padding: 10px;
             text-align: left;
         }
 
@@ -166,62 +233,264 @@
             overflow-wrap: anywhere;
         }
 
-        .hint {
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 12px;
+        td[data-label="日期"] {
+            white-space: nowrap;
         }
 
-        #status {
+        td[data-label="原因 / 備註"] {
             white-space: pre-wrap;
+        }
+
+        .distance {
+            color: #15803d;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cell-value {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .empty-cell {
+            padding: 22px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        #summary {
+            margin: 14px 0;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: end;
+            gap: 10px;
+        }
+
+        .filter-row .btn {
+            width: auto;
+            margin: 0;
+        }
+
+        #importSummary {
+            overflow-wrap: anywhere;
         }
 
         #importErrors {
-            white-space: pre-wrap;
             color: #b91c1c;
-            margin: 10px 0;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-family: inherit;
+            font-size: 14px;
         }
 
         #importMode {
-            margin: 10px 0;
+            margin: 8px 0 12px;
         }
 
         #downloadArea {
-            margin: 12px 0;
-            padding: 12px;
+            margin-top: 12px;
+            padding: 14px;
             border-radius: 8px;
             background: #eff6ff;
         }
 
+        #downloadArea p {
+            margin: 0 0 8px;
+            font-size: 14px;
+        }
+
         #downloadLink {
-            display: inline-block;
-            margin-top: 8px;
             color: #1d4ed8;
             overflow-wrap: anywhere;
         }
 
         details {
-            margin-top: 15px;
+            margin-top: 14px;
         }
 
         summary {
-            cursor: pointer;
             margin-bottom: 12px;
+            color: #475569;
+            cursor: pointer;
         }
 
         #backupText {
             margin-bottom: 10px;
         }
 
-        #summary {
-            margin-top: 10px;
-            font-weight: bold;
+        .version {
+            margin: 0;
+            text-align: right;
+            color: #94a3b8;
+            font-size: 12px;
         }
 
-        .version {
-            text-align: right;
-            color: #64748b;
-            font-size: 12px;
+        /* 手機版：歷史紀錄與匯入預覽均改為卡片 */
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+                padding-bottom: max(
+                    24px,
+                    env(safe-area-inset-bottom)
+                );
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .record-table {
+                overflow: visible;
+            }
+
+            .record-table table,
+            .record-table tbody {
+                display: block;
+                width: 100%;
+            }
+
+            .record-table table {
+                margin-top: 14px;
+                border: 0;
+            }
+
+            .record-table thead {
+                display: none;
+            }
+
+            .record-table tbody {
+                display: grid;
+                gap: 14px;
+            }
+
+            .record-table tbody tr {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
+                width: 100%;
+                padding: 14px;
+                border: 1px solid #dbe3ef;
+                border-radius: 12px;
+                background: white;
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+            }
+
+            .record-table tbody td {
+                display: grid;
+                grid-template-columns: 105px minmax(0, 1fr);
+                align-items: start;
+                gap: 10px;
+                width: 100%;
+                min-width: 0;
+                padding: 10px 0;
+                border: 0;
+                border-bottom: 1px solid #eef2f7;
+                font-size: 15px;
+                line-height: 1.6;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            .record-table tbody td::before {
+                content: attr(data-label);
+                color: var(--muted);
+                font-size: 13px;
+                font-weight: 600;
+                white-space: normal;
+            }
+
+            .record-table tbody td[data-label="日期"] {
+                padding-top: 0;
+                color: #1e3a8a;
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            .record-table tbody td.distance {
+                font-size: 18px;
+            }
+
+            .record-table tbody td:last-child {
+                padding-bottom: 0;
+                border-bottom: 0;
+            }
+
+            .record-table td[data-label="原因 / 備註"]
+                .cell-value {
+                white-space: pre-wrap;
+            }
+
+            .record-table td[data-label="操作"] {
+                align-items: center;
+            }
+
+            .record-table td[data-label="操作"]
+                .cell-value {
+                justify-self: end;
+            }
+
+            .record-table .btn-danger {
+                min-width: 72px;
+            }
+
+            .record-table tbody td.empty-cell {
+                display: block;
+                padding: 12px 0;
+                text-align: center;
+                color: var(--muted);
+                font-size: 15px;
+                font-weight: 400;
+            }
+
+            .record-table tbody td.empty-cell::before {
+                content: none;
+            }
+        }
+
+        @media (max-width: 360px) {
+            body {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .card {
+                padding: 12px;
+            }
+
+            .form-grid {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0;
+            }
+
+            .record-table tbody tr {
+                padding: 12px;
+            }
+
+            .record-table tbody td {
+                grid-template-columns: 90px minmax(0, 1fr);
+                gap: 8px;
+                font-size: 14px;
+            }
+
+            .record-table tbody td::before {
+                font-size: 12px;
+            }
+
+            .filter-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .filter-row .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -230,10 +499,9 @@
 <div class="container">
     <h1>🚗 行車里數記錄本</h1>
 
-    <div class="card">
-        <p id="status" role="status" aria-live="polite">
-            資料只儲存在此瀏覽器，請定期匯出備份。
-        </p>
+    <!-- 初始不顯示通知；只在操作結果或錯誤時顯示 -->
+    <div class="card" id="statusBox" hidden>
+        <p id="status" role="status" aria-live="polite"></p>
     </div>
 
     <div class="card">
@@ -243,46 +511,61 @@
                 <input type="date" id="driveDate" required>
             </div>
 
-            <div class="form-group">
-                <label for="startMileage">開始里數 (km，選填)</label>
-                <input
-                    type="number"
-                    id="startMileage"
-                    min="0"
-                    step="0.1"
-                >
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="startMileage">
+                        開始里數 (km，選填)
+                    </label>
+                    <input
+                        type="number"
+                        id="startMileage"
+                        min="0"
+                        step="0.1"
+                        placeholder="例如 61474"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="endMileage">
+                        完結里數 (km，選填)
+                    </label>
+                    <input
+                        type="number"
+                        id="endMileage"
+                        min="0"
+                        step="0.1"
+                        placeholder="例如 61574"
+                    >
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="endMileage">完結里數 (km，選填)</label>
-                <input
-                    type="number"
-                    id="endMileage"
-                    min="0"
-                    step="0.1"
-                >
-            </div>
-
-            <div class="form-group">
-                <label for="totalDistance">總行車距離 (km)</label>
+                <label for="totalDistance">
+                    總行車距離 (km)
+                </label>
                 <input
                     type="number"
                     id="totalDistance"
                     min="0"
                     step="0.1"
+                    placeholder="自動計算或直接輸入"
                     required
                 >
             </div>
 
             <p class="hint">
                 開始及完結都有值時，自動計算距離。
-                只有開始及距離時，儲存時補上完結；
-                只有完結及距離時，補上開始。
+                只填其中一個里數及距離，儲存時會補上另一個。
+                亦可只輸入總距離。
             </p>
 
             <div class="form-group">
                 <label for="remarks">行車原因 / 備註</label>
-                <textarea id="remarks" rows="2"></textarea>
+                <textarea
+                    id="remarks"
+                    rows="2"
+                    placeholder="例如 Flex、見客、購買物資"
+                ></textarea>
             </div>
 
             <button class="btn btn-primary" type="submit">
@@ -302,7 +585,7 @@
 
         <div class="action-grid">
             <button class="btn btn-secondary" id="jsonExport">
-                備份 JSON
+                匯出 JSON
             </button>
 
             <button class="btn btn-secondary" id="jsonImport">
@@ -312,35 +595,35 @@
 
         <input type="file" id="fileInput" hidden>
 
-        <p class="hint">
-            iPhone：匯出時可在分享選單選「儲存到檔案」。
-            Excel 欄位沿用舊版；跨裝置需手動匯出及匯入。
-            Excel 功能需要網絡載入元件。
-        </p>
-
         <div id="downloadArea" hidden>
             <p>
-                如分享未完成，可再按以下連結下載，
-                或長按連結儲存：
+                可使用以下連結下載；iPhone 亦可長按連結，
+                或在分享選單選「儲存到檔案」。
             </p>
             <a id="downloadLink">下載檔案</a>
         </div>
 
         <details>
-            <summary>JSON 儲存替代方法</summary>
+            <summary>JSON 文字備份</summary>
 
-            <button class="btn btn-secondary" id="showBackup">
-                顯示目前備份文字
+            <button
+                class="btn btn-secondary"
+                id="showBackup"
+            >
+                顯示 JSON 文字
             </button>
 
             <textarea
                 id="backupText"
-                rows="5"
+                rows="6"
                 readonly
                 aria-label="JSON 備份文字"
             ></textarea>
 
-            <button class="btn btn-secondary" id="copyBackup">
+            <button
+                class="btn btn-secondary"
+                id="copyBackup"
+            >
                 複製文字
             </button>
         </details>
@@ -352,22 +635,23 @@
         <p id="importSummary"></p>
         <pre id="importErrors"></pre>
 
-        <div class="table-container">
-            <table>
+        <div class="table-container record-table">
+            <table aria-label="匯入紀錄預覽">
                 <thead>
                     <tr>
                         <th>日期</th>
-                        <th>開始里數</th>
-                        <th>完結里數</th>
-                        <th>距離</th>
-                        <th>備註</th>
+                        <th>開始 / 完結里數</th>
+                        <th>總距離</th>
+                        <th>原因 / 備註</th>
                     </tr>
                 </thead>
                 <tbody id="previewBody"></tbody>
             </table>
         </div>
 
-        <p class="hint">預覽最多顯示首 5 條有效紀錄。</p>
+        <p class="hint">
+            預覽最多顯示首 5 條有效紀錄。
+        </p>
 
         <label for="importMode">匯入方式</label>
 
@@ -376,13 +660,13 @@
                 合併並略過完全相同紀錄
             </option>
             <option value="replace">
-                取代全部（保留檔案內所有紀錄）
+                取代全部
             </option>
         </select>
 
         <p class="hint">
-            同日可以有多程車；日期、里數、距離及備註完全相同
-            才視為重複。如原本有兩程完全相同，合併時會視為一條。
+            合併時，日期、開始里數、完結里數、距離及備註
+            完全相同才視為重複。取代全部則保留檔案內所有紀錄。
         </p>
 
         <button id="applyImport" class="btn btn-primary">
@@ -397,17 +681,21 @@
     <div class="card">
         <h2>歷史紀錄</h2>
 
-        <label for="monthFilter">按月份查看</label>
-        <input type="month" id="monthFilter">
+        <div class="filter-row">
+            <div>
+                <label for="monthFilter">按月份查看</label>
+                <input type="month" id="monthFilter">
+            </div>
 
-        <button class="btn btn-secondary" id="clearFilter">
-            顯示全部
-        </button>
+            <button class="btn btn-secondary" id="clearFilter">
+                顯示全部
+            </button>
+        </div>
 
         <p id="summary"></p>
 
-        <div class="table-container">
-            <table>
+        <div class="table-container record-table">
+            <table aria-label="行車歷史紀錄">
                 <thead>
                     <tr>
                         <th>日期</th>
@@ -417,39 +705,46 @@
                         <th>操作</th>
                     </tr>
                 </thead>
-
                 <tbody id="recordTableBody"></tbody>
             </table>
         </div>
     </div>
 
-    <p class="version">v1.2.0</p>
+    <p class="version">v1.3.0</p>
 </div>
 
 <script>
 'use strict';
 
 const $ = id => document.getElementById(id);
-const KEY = 'mileage_records';
+const STORAGE_KEY = 'mileage_records';
 
 let records = [];
 let pending = null;
 let downloadURL = null;
-let blocked = false;
+let storageBlocked = false;
 
-// 使用裝置本地日期，避免 UTC 導致日期跳到翌日。
+const fieldLabels = [
+    '日期',
+    '開始 → 完結 (km)',
+    '總距離',
+    '原因 / 備註'
+];
+
 function localToday() {
-    const d = new Date();
+    const date = new Date();
 
     return [
-        d.getFullYear(),
-        String(d.getMonth() + 1).padStart(2, '0'),
-        String(d.getDate()).padStart(2, '0')
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
     ].join('-');
 }
 
-function message(text) {
+function message(text, isError = false) {
     $('status').textContent = text;
+    $('statusBox').classList.toggle('error', isError);
+    $('statusBox').hidden = !text;
 }
 
 function validDate(value) {
@@ -457,13 +752,12 @@ function validDate(value) {
         return false;
     }
 
-    const d = new Date(value + 'T12:00:00Z');
+    const date = new Date(value + 'T12:00:00Z');
 
-    return !isNaN(d) &&
-        d.toISOString().slice(0, 10) === value;
+    return !isNaN(date) &&
+        date.toISOString().slice(0, 10) === value;
 }
 
-// 支援文字日期及一般 Excel 日期序號。
 function dateValue(value) {
     if (value instanceof Date) {
         return [
@@ -474,23 +768,29 @@ function dateValue(value) {
     }
 
     if (typeof value === 'number') {
-        const d = XLSX.SSF.parse_date_code(value);
+        if (typeof XLSX === 'undefined') {
+            throw Error('Excel 日期元件未載入');
+        }
 
-        if (!d) {
+        const date = XLSX.SSF.parse_date_code(value);
+
+        if (!date) {
             throw Error('日期無效');
         }
 
         return [
-            d.y,
-            String(d.m).padStart(2, '0'),
-            String(d.d).padStart(2, '0')
+            date.y,
+            String(date.m).padStart(2, '0'),
+            String(date.d).padStart(2, '0')
         ].join('-');
     }
 
     return String(value ?? '').trim().replace(
         /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/,
-        (_, y, m, d) =>
-            y + '-' + m.padStart(2, '0') + '-' + d.padStart(2, '0')
+        (_, year, month, day) =>
+            year + '-' +
+            month.padStart(2, '0') + '-' +
+            day.padStart(2, '0')
     );
 }
 
@@ -522,14 +822,17 @@ function numberValue(value, optional = false) {
 
     const number = Number(text);
 
-    if (!Number.isFinite(number) || number < 0) {
+    if (
+        !Number.isFinite(number) ||
+        number < 0 ||
+        number > Number.MAX_SAFE_INTEGER
+    ) {
         throw Error('里數無效');
     }
 
     return number;
 }
 
-// 所有新增、匯入及載入的紀錄均使用相同驗證。
 function normalize(record) {
     if (
         !record ||
@@ -607,13 +910,13 @@ function mergeData(existing, incoming) {
     return result;
 }
 
-// 成功寫入後才更新畫面及記憶體。
 function commit(next) {
-    if (blocked) {
+    if (storageBlocked) {
         message(
-            '已暫停修改，避免覆蓋現有資料。' +
-            '如另一分頁曾更改資料，請重新整理後再試。' +
-            '如原有資料無法讀取，請保留此瀏覽器資料。'
+            '已暫停修改，避免覆蓋資料。' +
+            '如另一個分頁曾更新資料，請重新整理後再試。' +
+            '如原有資料無法讀取，請保留此瀏覽器資料。',
+            true
         );
 
         return false;
@@ -624,11 +927,15 @@ function commit(next) {
     );
 
     try {
-        localStorage.setItem(KEY, JSON.stringify(next));
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(next)
+        );
     } catch (error) {
         message(
             '儲存失敗，現有紀錄未更改。' +
-            '請檢查瀏覽器儲存設定，並先匯出備份。'
+            '請檢查瀏覽器儲存設定。',
+            true
         );
 
         return false;
@@ -640,17 +947,49 @@ function commit(next) {
     return true;
 }
 
-// 使用 textContent，避免備註被當作 HTML 執行。
-function appendCells(body, values) {
-    const row = document.createElement('tr');
+function addCell(row, label, value, className = '') {
+    const cell = document.createElement('td');
+    cell.dataset.label = label;
 
-    for (const value of values) {
-        const cell = document.createElement('td');
-        cell.textContent = String(value);
-        row.append(cell);
+    if (className) {
+        cell.className = className;
     }
 
-    body.append(row);
+    const content = document.createElement('span');
+    content.className = 'cell-value';
+    content.textContent = String(value);
+
+    cell.append(content);
+    row.append(cell);
+
+    return content;
+}
+
+function createRecordRow(record) {
+    const row = document.createElement('tr');
+
+    addCell(row, fieldLabels[0], record.date);
+
+    addCell(
+        row,
+        fieldLabels[1],
+        (record.start ?? '—') + ' → ' +
+        (record.end ?? '—')
+    );
+
+    addCell(
+        row,
+        fieldLabels[2],
+        record.total + ' km',
+        'distance'
+    );
+
+    addCell(
+        row,
+        fieldLabels[3],
+        record.remarks || '—'
+    );
+
     return row;
 }
 
@@ -667,16 +1006,11 @@ function render() {
         );
 
     for (const { record, index } of shown) {
-        const row = appendCells(body, [
-            record.date,
-            (record.start ?? '—') + ' → ' + (record.end ?? '—'),
-            record.total + ' km',
-            record.remarks || '—'
-        ]);
+        const row = createRecordRow(record);
+        const actions = addCell(row, '操作', '');
 
-        const cell = document.createElement('td');
         const button = document.createElement('button');
-
+        button.type = 'button';
         button.className = 'btn-danger';
         button.textContent = '刪除';
 
@@ -693,13 +1027,20 @@ function render() {
             }
         };
 
-        cell.append(button);
-        row.append(cell);
+        actions.append(button);
+        body.append(row);
     }
 
     if (!shown.length) {
-        const row = appendCells(body, ['暫無紀錄']);
-        row.firstElementChild.colSpan = 5;
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+
+        cell.colSpan = 5;
+        cell.className = 'empty-cell';
+        cell.textContent = '暫無紀錄';
+
+        row.append(cell);
+        body.append(row);
     }
 
     const total = shown.reduce(
@@ -716,7 +1057,8 @@ function requireXlsx() {
     if (typeof XLSX === 'undefined') {
         message(
             'Excel 元件未載入。請連接網絡後重新整理；' +
-            'JSON 備份仍可使用。'
+            'JSON 功能仍可使用。',
+            true
         );
 
         return false;
@@ -725,37 +1067,41 @@ function requireXlsx() {
     return true;
 }
 
-// 載入原有版本使用的同一個儲存位置。
-$('driveDate').value = localToday();
+function loadRecords() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
 
-try {
-    const raw = localStorage.getItem(KEY);
+        if (!raw) {
+            return;
+        }
 
-    if (raw) {
-        const parsed = JSON.parse(raw);
+        const data = JSON.parse(raw);
 
-        if (!Array.isArray(parsed)) {
+        if (!Array.isArray(data)) {
             throw Error('儲存格式錯誤');
         }
 
-        records = parsed
+        records = data
             .map(normalize)
             .sort((a, b) => b.date.localeCompare(a.date));
-    }
-} catch (error) {
-    blocked = true;
+    } catch (error) {
+        storageBlocked = true;
 
-    message(
-        '無法讀取原有儲存資料，已停止寫入，避免覆蓋。' +
-        '請保留此瀏覽器資料。'
-    );
+        message(
+            '無法讀取原有資料，已停止寫入以避免覆蓋。' +
+            '請保留此瀏覽器資料。原因：' + error.message,
+            true
+        );
+    }
 }
 
+$('driveDate').value = localToday();
+loadRecords();
 render();
 
-// 只在修改開始或完結時重算距離，不自動改寫原始讀數。
+// 開始、完結都有值時，自動重算距離。
 for (const id of ['startMileage', 'endMileage']) {
-    $(id).oninput = () => {
+    $(id).addEventListener('input', () => {
         const start = $('startMileage').value;
         const end = $('endMileage').value;
 
@@ -763,10 +1109,10 @@ for (const id of ['startMileage', 'endMileage']) {
             $('totalDistance').value =
                 (Number(end) - Number(start)).toFixed(1);
         }
-    };
+    });
 }
 
-$('mileageForm').onsubmit = event => {
+$('mileageForm').addEventListener('submit', event => {
     event.preventDefault();
 
     try {
@@ -808,27 +1154,31 @@ $('mileageForm').onsubmit = event => {
                 $(id).value = '';
             }
 
-            message('紀錄已儲存在此瀏覽器。');
+            message('紀錄已新增。');
         }
     } catch (error) {
-        message(error.message);
+        message(error.message, true);
     }
-};
+});
 
-$('monthFilter').oninput = render;
+$('monthFilter').addEventListener('input', render);
 
-$('clearFilter').onclick = () => {
+$('clearFilter').addEventListener('click', () => {
     $('monthFilter').value = '';
     render();
-};
+});
 
 function backupText() {
     return JSON.stringify(records, null, 2);
 }
 
-// 優先使用系統檔案分享；同時保留 Blob 下載連結。
-async function deliver(bytes, name, type) {
-    const file = new File([bytes], name, { type });
+// 保留下載連結，直至下次匯出或離開頁面。
+async function deliver(bytes, filename, mimeType) {
+    const file = new File(
+        [bytes],
+        filename,
+        { type: mimeType }
+    );
 
     if (downloadURL) {
         URL.revokeObjectURL(downloadURL);
@@ -837,33 +1187,42 @@ async function deliver(bytes, name, type) {
     downloadURL = URL.createObjectURL(file);
 
     const link = $('downloadLink');
-
     link.href = downloadURL;
-    link.download = name;
-    link.textContent = '下載 ' + name;
+    link.download = filename;
+    link.textContent = '下載 ' + filename;
 
     $('downloadArea').hidden = false;
 
-    if (
-        navigator.share &&
-        navigator.canShare &&
-        navigator.canShare({ files: [file] })
-    ) {
+    let canShareFile = false;
+
+    try {
+        canShareFile = Boolean(
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({ files: [file] })
+        );
+    } catch (error) {
+        canShareFile = false;
+    }
+
+    if (canShareFile) {
         try {
             await navigator.share({
                 files: [file],
-                title: name
+                title: filename
             });
 
             message(
-                '已交予系統分享選單；' +
-                '請在「檔案」確認備份已儲存。'
+                '已開啟系統分享；請在「檔案」確認已儲存。'
             );
 
             return;
         } catch (error) {
             if (error.name === 'AbortError') {
-                message('分享已取消；仍可使用下載連結。');
+                message(
+                    '分享已取消，仍可使用下方下載連結。'
+                );
+
                 return;
             }
         }
@@ -872,13 +1231,13 @@ async function deliver(bytes, name, type) {
     link.click();
 
     message(
-        '已發出下載要求；如沒有儲存，請按下載連結。'
+        '已發出下載要求；如未能儲存，請使用下方下載連結。'
     );
 }
 
-$('jsonExport').onclick = () => {
+$('jsonExport').addEventListener('click', () => {
     if (!records.length) {
-        message('沒有資料可以備份。');
+        message('沒有資料可以匯出。');
         return;
     }
 
@@ -887,11 +1246,14 @@ $('jsonExport').onclick = () => {
         'mileage_backup_' + localToday() + '.json',
         'application/json'
     ).catch(() => {
-        message('匯出失敗，請使用備份文字。');
+        message(
+            'JSON 匯出失敗，可改用「JSON 文字備份」。',
+            true
+        );
     });
-};
+});
 
-$('excelExport').onclick = () => {
+$('excelExport').addEventListener('click', () => {
     if (!records.length) {
         message('沒有資料可以匯出。');
         return;
@@ -902,7 +1264,7 @@ $('excelExport').onclick = () => {
     }
 
     try {
-        // 保留舊版欄位名稱，兼容以前匯出的 Excel。
+        // 沿用舊版欄位，兼容以前匯出的檔案。
         const rows = records.map(record => ({
             '日期': record.date,
             '開始里數 (km)': record.start ?? '',
@@ -939,53 +1301,66 @@ $('excelExport').onclick = () => {
             '行車里數紀錄_' + localToday() + '.xlsx',
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         ).catch(() => {
-            message('匯出失敗，請再試下載連結。');
+            message(
+                'Excel 匯出失敗，請再試下方下載連結。',
+                true
+            );
         });
     } catch (error) {
-        message('Excel 匯出失敗：' + error.message);
+        message(
+            'Excel 匯出失敗：' + error.message,
+            true
+        );
     }
-};
+});
 
-$('showBackup').onclick = () => {
+$('showBackup').addEventListener('click', () => {
     $('backupText').value = backupText();
-};
+});
 
-$('copyBackup').onclick = async () => {
-    $('backupText').value = backupText();
+$('copyBackup').addEventListener('click', async () => {
+    const text = backupText();
+    $('backupText').value = text;
 
     try {
-        await navigator.clipboard.writeText(backupText());
-        message('備份文字已複製。');
+        await navigator.clipboard.writeText(text);
+        message('JSON 文字已複製。');
     } catch (error) {
-        $('backupText').focus();
-        $('backupText').select();
+        const textarea = $('backupText');
 
-        message('請長按備份文字，選擇全選及複製。');
+        textarea.focus();
+        textarea.select();
+        textarea.setSelectionRange(0, textarea.value.length);
+
+        message(
+            '請長按文字，選擇全選及複製。'
+        );
     }
-};
+});
 
 function chooseFile(extensions) {
-    $('preview').hidden = true;
     pending = null;
+    $('preview').hidden = true;
 
-    $('fileInput').accept = extensions;
-    $('fileInput').value = '';
-    $('fileInput').click();
+    const input = $('fileInput');
+
+    input.accept = extensions;
+    input.value = '';
+    input.click();
 }
 
-$('excelImport').onclick = () => {
+$('excelImport').addEventListener('click', () => {
     if (requireXlsx()) {
         chooseFile('.xlsx,.xls');
     }
-};
+});
 
-$('jsonImport').onclick = () => {
+$('jsonImport').addEventListener('click', () => {
     chooseFile('.json');
-};
+});
 
-// 找出符合舊版欄位的工作表。
 function excelRows(workbook) {
-    const required = [
+    const requiredHeaders = [
         '日期',
         '開始里數 (km)',
         '完結里數 (km)',
@@ -1000,7 +1375,8 @@ function excelRows(workbook) {
             {
                 header: 1,
                 defval: null,
-                raw: true
+                raw: true,
+                blankrows: true
             }
         );
 
@@ -1008,37 +1384,39 @@ function excelRows(workbook) {
             value => String(value ?? '').trim()
         );
 
-        const hasRequired = required.every(
-            value => headers.includes(value)
+        const hasRequired = requiredHeaders.every(
+            header => headers.includes(header)
         );
 
         const hasRemarks =
             headers.includes('長車原因 / 備註') ||
             headers.includes('行車原因 / 備註');
 
-        if (hasRequired && hasRemarks) {
-            const nonempty = headers.filter(Boolean);
-
-            if (new Set(nonempty).size !== nonempty.length) {
-                throw Error('欄位名稱重複');
-            }
-
-            candidates.push({ rows, headers });
+        if (!hasRequired || !hasRemarks) {
+            continue;
         }
+
+        const nonempty = headers.filter(Boolean);
+
+        if (new Set(nonempty).size !== nonempty.length) {
+            throw Error('Excel 欄位名稱重複');
+        }
+
+        candidates.push({ rows, headers });
     }
 
     if (candidates.length !== 1) {
         throw Error(
             candidates.length
                 ? '有多張符合格式的工作表，請保留一張後再匯入'
-                : '找不到正確欄位，請使用本 App 匯出的 Excel'
+                : '找不到正確欄位，請使用本 App 匯出的 Excel 格式'
         );
     }
 
     const { rows, headers } = candidates[0];
 
-    const get = (row, name) =>
-        row[headers.indexOf(name)];
+    const get = (row, header) =>
+        row[headers.indexOf(header)];
 
     const remarksHeader =
         headers.includes('長車原因 / 備註')
@@ -1048,8 +1426,10 @@ function excelRows(workbook) {
     return rows.slice(1).map((row, index) => ({
         line: index + 2,
 
-        blank: row.every(
-            value => value === null || value === ''
+        blank: row.every(value =>
+            value === null ||
+            value === undefined ||
+            String(value).trim() === ''
         ),
 
         record: {
@@ -1062,7 +1442,7 @@ function excelRows(workbook) {
     }));
 }
 
-$('fileInput').onchange = async event => {
+$('fileInput').addEventListener('change', async event => {
     const file = event.target.files[0];
 
     if (!file) {
@@ -1070,7 +1450,11 @@ $('fileInput').onchange = async event => {
     }
 
     if (file.size > 20 * 1024 * 1024) {
-        message('檔案太大，請選擇 20 MB 以下的檔案。');
+        message(
+            '檔案太大，請選擇 20 MB 以下的檔案。',
+            true
+        );
+
         event.target.value = '';
         return;
     }
@@ -1102,16 +1486,25 @@ $('fileInput').onchange = async event => {
                 }
             );
 
-            if (workbook.Workbook?.WBProps?.date1904) {
+            const uses1904 =
+                workbook.Workbook?.WBProps?.date1904;
+
+            if (
+                uses1904 === true ||
+                uses1904 === 1 ||
+                uses1904 === '1' ||
+                uses1904 === 'true'
+            ) {
                 throw Error(
                     '此 Excel 使用 1904 日期系統，' +
-                    '請先把日期欄轉為 YYYY-MM-DD 文字'
+                    '請先把日期欄轉為 YYYY-MM-DD 文字，' +
+                    '並改用一般 1900 日期系統後再匯入'
                 );
             }
 
             source = excelRows(workbook);
         } else {
-            throw Error('請選擇 Excel 或 JSON');
+            throw Error('請選擇 Excel 或 JSON 檔案');
         }
 
         const good = [];
@@ -1126,7 +1519,8 @@ $('fileInput').onchange = async event => {
                 good.push(normalize(entry.record));
             } catch (error) {
                 errors.push(
-                    '第 ' + entry.line + ' 行：' + error.message
+                    '第 ' + entry.line + ' 行：' +
+                    error.message
                 );
             }
         }
@@ -1134,7 +1528,8 @@ $('fileInput').onchange = async event => {
         const unique = mergeData([], good);
 
         const added =
-            mergeData(records, good).length - records.length;
+            mergeData(records, good).length -
+            records.length;
 
         pending = {
             rows: good,
@@ -1145,51 +1540,57 @@ $('fileInput').onchange = async event => {
 
         $('importSummary').textContent =
             `${file.name}：有效 ${good.length} 條；` +
-            `檔案內完全相同 ${good.length - unique.length} 條；` +
+            `檔案內重複 ${good.length - unique.length} 條；` +
             `合併將新增 ${added} 條。`;
 
         $('importErrors').textContent = errors.length
-            ? '有 ' + errors.length +
-              ' 行錯誤，請修正檔案後重新匯入。\n' +
+            ? `有 ${errors.length} 行錯誤，` +
+              '請修正檔案後重新匯入。\n' +
               errors.slice(0, 30).join('\n')
             : '';
 
         $('previewBody').replaceChildren();
 
         for (const record of good.slice(0, 5)) {
-            appendCells($('previewBody'), [
-                record.date,
-                record.start ?? '—',
-                record.end ?? '—',
-                record.total,
-                record.remarks
-            ]);
+            $('previewBody').append(
+                createRecordRow(record)
+            );
         }
 
         $('applyImport').disabled =
             errors.length > 0 ||
             good.length === 0 ||
-            blocked;
+            storageBlocked;
 
         $('preview').hidden = false;
 
         message(
             '請檢查匯入預覽，確認後才會更改紀錄。'
         );
+
+        $('preview').scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
     } catch (error) {
         pending = null;
-        message('無法匯入：' + error.message);
+
+        message(
+            '無法匯入：' + error.message,
+            true
+        );
     } finally {
         event.target.value = '';
     }
-};
+});
 
-$('cancelImport').onclick = () => {
+$('cancelImport').addEventListener('click', () => {
     pending = null;
     $('preview').hidden = true;
-};
+    message('');
+});
 
-$('applyImport').onclick = () => {
+$('applyImport').addEventListener('click', () => {
     if (
         !pending ||
         pending.errors.length ||
@@ -1205,7 +1606,7 @@ $('applyImport').onclick = () => {
         const confirmed = confirm(
             '將以檔案內 ' + pending.rows.length +
             ' 條紀錄取代現有 ' + records.length +
-            ' 條。請先匯出備份，確定繼續？'
+            ' 條，確定繼續？'
         );
 
         if (!confirmed) {
@@ -1225,16 +1626,20 @@ $('applyImport').onclick = () => {
             '匯入完成，共 ' + records.length + ' 條紀錄。'
         );
     }
-};
+});
 
-// 避免另一分頁更新後，舊分頁覆蓋新資料。
+// 另一個分頁更改資料時，阻止舊分頁覆蓋新資料。
 window.addEventListener('storage', event => {
-    if (event.key === KEY || event.key === null) {
-        blocked = true;
+    if (
+        event.key === STORAGE_KEY ||
+        event.key === null
+    ) {
+        storageBlocked = true;
 
         message(
-            '另一個分頁已更改資料。' +
-            '請先重新整理，再繼續修改。'
+            '另一個分頁已更改資料，' +
+            '請重新整理後繼續使用。',
+            true
         );
     }
 });
